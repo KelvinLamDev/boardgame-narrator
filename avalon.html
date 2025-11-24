@@ -3,19 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>阿瓦隆語音主持 (粵語版)</title>
+    <title>阿瓦隆遊戲助手 (專業版)</title>
     <style>
         :root {
             --bg-color: #1a1a1a;
             --text-color: #e0e0e0;
             --accent-color: #ff4757;
+            --secondary-color: #2ed573;
             --card-bg: #2d3436;
-            --success-color: #4cd137;
-            --warning-color: #e1b12c;
+            --border-color: #444;
+            --danger-color: #ff6b6b;
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Microsoft JhengHei", "微軟正黑體", sans-serif;
+            font-family: -apple-system, "Microsoft JhengHei", "微軟正黑體", sans-serif;
             background-color: var(--bg-color);
             color: var(--text-color);
             display: flex;
@@ -23,13 +24,11 @@
             align-items: center;
             min-height: 100vh;
             margin: 0;
-            padding: 20px;
-            text-align: center;
+            padding: 10px;
         }
 
-        h1 { color: var(--accent-color); margin-bottom: 10px; }
-        p.subtitle { color: #aaa; font-size: 0.9rem; margin-bottom: 30px; }
-
+        h1 { color: var(--accent-color); margin: 10px 0; font-size: 1.8rem; }
+        
         .container {
             width: 100%;
             max-width: 600px;
@@ -37,238 +36,462 @@
             padding: 20px;
             border-radius: 12px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            margin-bottom: 20px;
+            box-sizing: border-box; /* 確保 padding 不會撐破寬度 */
         }
 
-        h3 { border-bottom: 1px solid #444; padding-bottom: 10px; margin-bottom: 20px; }
+        .section { display: none; }
+        .section.active { display: block; animation: fadeIn 0.4s; }
 
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h3 { border-bottom: 1px solid var(--border-color); padding-bottom: 10px; margin-top: 0; display: flex; justify-content: space-between; align-items: center;}
+        
+        /* 輸入區塊 */
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 12px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            background: #111;
+            color: white;
+            font-size: 1rem;
+        }
+
+        /* 按鈕樣式 */
+        button {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1rem;
+            transition: all 0.2s;
+        }
+
+        .btn-primary { background-color: var(--accent-color); color: white; width: 100%; }
+        .btn-add { background-color: var(--secondary-color); color: white; }
+        .btn-danger { background: var(--danger-color); color: white; }
+        
+        .btn-outline-danger {
+            background: transparent;
+            border: 1px solid var(--danger-color);
+            color: var(--danger-color);
+            padding: 5px 10px;
+            font-size: 0.8rem;
+        }
+        .btn-outline-danger:hover { background: var(--danger-color); color: white; }
+
+        .btn-small { padding: 8px 15px; font-size: 0.9rem; background: #555; color: white; width: 100%; }
+
+        button:disabled { background-color: #555; opacity: 0.7; cursor: not-allowed; }
+
+        /* 玩家名單 */
+        .player-list-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .player-tag {
+            background: rgba(255,255,255,0.1);
+            padding: 8px 12px;
+            border-radius: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* 角色配置 */
         .roles-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 15px;
+            gap: 10px;
             text-align: left;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
         }
 
         .role-item {
             background: rgba(255,255,255,0.05);
-            padding: 12px;
+            padding: 10px;
             border-radius: 8px;
             display: flex;
             align-items: center;
-            cursor: pointer;
-            transition: background 0.2s;
+        }
+        
+        .role-item input { margin-right: 10px; width: 18px; height: 18px; accent-color: var(--accent-color); }
+
+        /* 任務勾選區 */
+        .mission-selector {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 10px;
+            margin-bottom: 20px;
         }
 
-        .role-item:hover { background: rgba(255,255,255,0.1); }
-
-        input[type="checkbox"] {
-            width: 20px;
-            height: 20px;
-            margin-right: 10px;
-            accent-color: var(--accent-color);
+        .mission-checkbox {
+            display: block;
+            background: #333;
+            padding: 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            user-select: none;
+            font-size: 0.9rem;
+            text-align: center;
         }
 
-        .controls { margin-top: 20px; }
+        .mission-checkbox input { display: none; } /* 隱藏原生 checkbox */
+        .mission-checkbox:has(input:checked) { 
+            background: var(--secondary-color); 
+            color: #000; 
+            font-weight: bold; 
+            box-shadow: 0 0 10px rgba(46, 213, 115, 0.4);
+        }
 
-        button {
-            background-color: var(--accent-color);
-            color: white;
-            border: none;
-            padding: 15px 40px;
-            font-size: 1.2rem;
-            border-radius: 50px;
-            cursor: pointer;
-            transition: transform 0.2s, opacity 0.2s;
+        /* 歷史表格 */
+        .history-log {
             width: 100%;
-            max-width: 300px;
-            font-weight: bold;
+            border-collapse: collapse;
+            margin-top: 10px;
+            font-size: 0.9rem;
         }
 
-        button:disabled { background-color: #555; cursor: not-allowed; }
-        button:active { transform: scale(0.95); }
-
-        #status {
-            margin-top: 30px;
-            font-size: 1.4rem;
-            font-weight: bold;
-            min-height: 3rem;
-            color: var(--success-color);
-            line-height: 1.5;
+        .history-log th, .history-log td {
+            border: 1px solid var(--border-color);
+            padding: 8px;
+            text-align: left;
         }
 
-        .voice-warning {
-            color: var(--warning-color);
-            font-size: 0.85rem;
-            margin-top: 15px;
-            display: none;
+        .history-log th { background: #333; }
+
+        #narratorText { color: var(--secondary-color); font-size: 1.2rem; margin: 20px 0; min-height: 1.5em; text-align: center;}
+        
+        .round-badge {
+            background: var(--accent-color);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            margin-right: 4px;
+            display: inline-block;
+            margin-bottom: 2px;
+        }
+        
+        .player-count-info {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            color: #aaa;
+            margin-bottom: 20px;
+            align-items: center;
         }
     </style>
 </head>
 <body>
 
-    <h1>阿瓦隆語音主持</h1>
-    <p class="subtitle">離線版網頁應用 (粵語/Cantonese)</p>
+    <h1>阿瓦隆遊戲助手</h1>
 
-    <div class="container">
-        <h3>選擇登場角色</h3>
+    <!-- SECTION 1: 設置與玩家輸入 -->
+    <div id="section-setup" class="container section active">
+        <h3>
+            1. 玩家名單
+            <!-- 新增：清空按鈕 -->
+            <button class="btn-outline-danger" onclick="clearAllPlayers()">清空名單</button>
+        </h3>
+        
+        <div class="input-group">
+            <input type="text" id="newPlayerName" placeholder="輸入玩家名字 (Enter)" onkeypress="handleEnter(event)">
+            <button class="btn-add" onclick="addPlayer()">加入</button>
+        </div>
+        
+        <div id="playerListDisplay" class="player-list-grid">
+            <!-- 玩家列表 -->
+        </div>
+        
+        <div class="player-count-info">
+            <span>當前人數: <span id="playerCount">0</span> 人</span>
+            <span>(建議 5-10 人)</span>
+        </div>
+
+        <h3>2. 角色配置</h3>
         <div class="roles-grid">
-            <label class="role-item">
-                <input type="checkbox" id="merlin" checked> 梅林 (Merlin)
-            </label>
-            <label class="role-item">
-                <input type="checkbox" id="percival" checked> 派西維爾 (Percival)
-            </label>
-            <label class="role-item">
-                <input type="checkbox" id="assassin" checked> 刺客 (Assassin)
-            </label>
-            <label class="role-item">
-                <input type="checkbox" id="morgana" checked> 莫甘娜 (Morgana)
-            </label>
-            <label class="role-item">
-                <input type="checkbox" id="mordred"> 莫德雷德 (Mordred)
-            </label>
-            <label class="role-item">
-                <input type="checkbox" id="oberon"> 奧伯倫 (Oberon)
-            </label>
+            <label class="role-item"><input type="checkbox" id="merlin" checked> 梅林</label>
+            <label class="role-item"><input type="checkbox" id="percival" checked> 派西維爾</label>
+            <label class="role-item"><input type="checkbox" id="assassin" checked> 刺客</label>
+            <label class="role-item"><input type="checkbox" id="morgana"> 莫甘娜</label>
+            <label class="role-item"><input type="checkbox" id="mordred"> 莫德雷德</label>
+            <label class="role-item"><input type="checkbox" id="oberon"> 奧伯倫</label>
         </div>
 
-        <div class="controls">
-            <button id="startBtn" onclick="startNarrator()">開始夜間流程</button>
-            <p id="voiceStatus" class="voice-warning">正在偵測語音...</p>
+        <button class="btn-primary" onclick="startNightPhase()">確認設定並開始天黑</button>
+        <p id="voiceStatus" style="font-size: 0.8rem; color: #666; margin-top: 10px;">語音載入中...</p>
+    </div>
+
+    <!-- SECTION 2: 夜間語音 -->
+    <div id="section-night" class="container section">
+        <h3>夜間語音進行中</h3>
+        <div style="text-align: center; padding: 30px 0;">
+            <div style="font-size: 4rem; margin-bottom: 20px;">🌑</div>
+            <div id="narratorText">準備開始...</div>
+        </div>
+        <button class="btn-danger" onclick="skipNarrator()">跳過語音 (直接天亮)</button>
+    </div>
+
+    <!-- SECTION 3: 遊戲記錄板 -->
+    <div id="section-game" class="container section">
+        <h3>第 <span id="currentRoundDisplay">1</span> 局 - 任務記錄</h3>
+        <p style="color:#aaa; font-size:0.9rem; margin-bottom: 10px;">請點選本局出任務的玩家：</p>
+        
+        <div id="missionSelectionArea" class="mission-selector">
+            <!-- JS 動態生成 -->
         </div>
 
-        <div id="status">請選擇角色並按開始</div>
+        <button class="btn-primary" id="recordBtn" onclick="recordMissionResult()">記錄本局任務</button>
+        
+        <h3 style="margin-top: 30px;">歷史紀錄</h3>
+        <table class="history-log">
+            <thead>
+                <tr>
+                    <th style="width: 40px;">局數</th>
+                    <th>出任務玩家</th>
+                </tr>
+            </thead>
+            <tbody id="historyTableBody">
+            </tbody>
+        </table>
+
+        <div style="margin-top: 30px; border-top: 1px solid #444; padding-top: 20px;">
+            <!-- 修改：使用新的重置函數，而非刷新頁面 -->
+            <button class="btn-small" onclick="resetGameToSetup()">結束本局 / 回到設置頁</button>
+            <p style="color: #666; font-size: 0.8rem; margin-top: 5px;">(玩家名單將會保留)</p>
+        </div>
     </div>
 
 <script>
+    // --- 全域變數 ---
+    let players = [];
+    let currentRound = 1;
+    let missionHistory = [];
+    
+    // 語音設定
     const synth = window.speechSynthesis;
     let selectedVoice = null;
-    
-    // 等待語音列表載入 (Chrome 需要)
-    window.speechSynthesis.onvoiceschanged = () => {
-        loadVoices();
-    };
+
+    // --- 初始化 ---
+    window.speechSynthesis.onvoiceschanged = loadVoices;
+    loadVoices();
 
     function loadVoices() {
         const voices = synth.getVoices();
-        // 優先尋找香港粵語語音
-        selectedVoice = voices.find(voice => voice.lang === 'zh-HK') 
-                     || voices.find(voice => voice.lang === 'zh-TW') // 其次台灣國語
-                     || voices.find(voice => voice.lang.includes('zh')); // 任何中文
-        
-        const statusEl = document.getElementById('voiceStatus');
-        if (!selectedVoice) {
-            statusEl.innerText = "注意：未偵測到粵語語音包，可能會使用系統預設語音。";
-            statusEl.style.display = 'block';
-        } else {
-            statusEl.innerText = `使用語音核心: ${selectedVoice.name}`;
-            statusEl.style.display = 'block';
-            statusEl.style.color = '#888';
+        selectedVoice = voices.find(v => v.lang === 'zh-HK') || 
+                        voices.find(v => v.lang === 'zh-TW') || 
+                        voices.find(v => v.lang.includes('zh'));
+        if(selectedVoice) document.getElementById('voiceStatus').innerText = `語音就緒: ${selectedVoice.name}`;
+    }
+
+    // --- 玩家名單功能 (新增清空功能) ---
+    function handleEnter(e) {
+        if (e.key === 'Enter') addPlayer();
+    }
+
+    function addPlayer() {
+        const input = document.getElementById('newPlayerName');
+        const name = input.value.trim();
+        if (name && !players.includes(name)) {
+            players.push(name);
+            renderPlayers();
+            input.value = '';
+        } else if (players.includes(name)) {
+            alert("名字重複了！");
+        }
+        input.focus();
+    }
+
+    function removePlayer(index) {
+        players.splice(index, 1);
+        renderPlayers();
+    }
+
+    // 新增：清空全部玩家
+    function clearAllPlayers() {
+        if (players.length === 0) return;
+        if (confirm("確定要清空所有玩家名單嗎？")) {
+            players = [];
+            renderPlayers();
         }
     }
 
-    // 延遲函數 Promise
-    const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+    function renderPlayers() {
+        const container = document.getElementById('playerListDisplay');
+        container.innerHTML = '';
+        players.forEach((p, index) => {
+            const div = document.createElement('div');
+            div.className = 'player-tag';
+            div.innerHTML = `<span>${p}</span><span style="cursor:pointer; margin-left:8px;" onclick="removePlayer(${index})">✕</span>`;
+            container.appendChild(div);
+        });
+        document.getElementById('playerCount').innerText = players.length;
+    }
 
-    // 朗讀函數
+    // --- 頁面切換 ---
+    function switchSection(id) {
+        document.querySelectorAll('.section').forEach(el => el.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        window.scrollTo(0, 0); // 切換頁面時滾動到頂部
+    }
+
+    // --- 新增：回到設置頁 (保留名單) ---
+    function resetGameToSetup() {
+        if (!confirm("確定要結束這局遊戲並回到設置頁？\n(玩家名單會保留，但歷史紀錄將清空)")) return;
+
+        // 重置遊戲變數
+        currentRound = 1;
+        missionHistory = [];
+
+        // 清空介面顯示
+        document.getElementById('historyTableBody').innerHTML = '';
+        document.getElementById('currentRoundDisplay').innerText = '1';
+        document.getElementById('narratorText').innerText = '準備開始...';
+
+        // 回到首頁
+        switchSection('section-setup');
+    }
+
+    // --- 語音流程 ---
+    const wait = (ms) => new Promise(r => setTimeout(r, ms));
     const speak = (text) => {
         return new Promise((resolve) => {
-            // 更新畫面文字
-            document.getElementById('status').innerText = text;
-            
-            const utterance = new SpeechSynthesisUtterance(text);
-            if (selectedVoice) utterance.voice = selectedVoice;
-            
-            // 調整語速與音調
-            utterance.rate = 0.9; 
-            utterance.pitch = 1.0;
-            
-            utterance.onend = () => {
-                resolve();
-            };
-            
-            synth.speak(utterance);
+            document.getElementById('narratorText').innerText = text;
+            const u = new SpeechSynthesisUtterance(text);
+            if (selectedVoice) u.voice = selectedVoice;
+            u.rate = 0.95;
+            u.onend = resolve;
+            synth.speak(u);
         });
     };
 
-    async function startNarrator() {
-        const startBtn = document.getElementById('startBtn');
-        startBtn.disabled = true;
-        startBtn.innerText = "正在主持中...";
-
-        // 1. 獲取角色配置
-        const hasMerlin = document.getElementById('merlin').checked;
-        const hasPercival = document.getElementById('percival').checked;
-        const hasAssassin = document.getElementById('assassin').checked; // 雖然刺客不影響特定腳本，但屬於壞人
-        const hasMordred = document.getElementById('mordred').checked;
-        const hasOberon = document.getElementById('oberon').checked;
-        const hasMorgana = document.getElementById('morgana').checked;
-
-        // 2. 設定時間間隔 (毫秒)
-        const LONG_PAUSE = 4000;  // 確認身份的時間
-        const SHORT_PAUSE = 1500; // 閉眼後的緩衝
+    async function startNightPhase() {
+        if (players.length < 5 && players.length > 0) {
+            if (!confirm("目前玩家少於5人，確定要開始嗎？")) return;
+        }
+        
+        switchSection('section-night');
+        
+        // 角色邏輯
+        const config = {
+            merlin: document.getElementById('merlin').checked,
+            percival: document.getElementById('percival').checked,
+            mordred: document.getElementById('mordred').checked,
+            oberon: document.getElementById('oberon').checked,
+            morgana: document.getElementById('morgana').checked
+        };
 
         try {
-            // --- 開場 ---
-            await speak("天黑請閉眼，所有人將手握成拳頭擺喺枱面。");
-            await wait(SHORT_PAUSE);
+            await speak("天黑請閉眼，所有人手握拳頭擺喺枱面。");
+            await wait(1500);
 
-            // --- 壞人階段 (Minions) ---
-            // 刺客(Assassin) 屬於壞人，會在此階段睜眼
+            // 壞人
             let minionText = "壞人請舉手，張開眼，互相確認身份。";
-            
-            // 如果有奧伯倫，特別提醒
-            if (hasOberon) minionText += " 奧伯倫請唔好張開眼。";
-            
+            if (config.oberon) minionText += " 奧伯倫請唔好張開眼。";
             await speak(minionText);
-            await wait(LONG_PAUSE + 2000); 
-            
+            await wait(4000);
             await speak("壞人請閉眼，手放低。");
-            await wait(SHORT_PAUSE);
+            await wait(1500);
 
-            // --- 梅林階段 (Merlin) ---
-            if (hasMerlin) {
+            // 梅林
+            if (config.merlin) {
                 let merlinText = "梅林請張開眼。壞人請舉起手指公。";
-                
-                // 如果有莫德雷德，梅林看不到他
-                if (hasMordred) merlinText += " 莫德雷德請唔好舉手。";
-                
+                if (config.mordred) merlinText += " 莫德雷德請唔好舉手。";
                 await speak(merlinText);
-                await wait(LONG_PAUSE);
+                await wait(3500);
                 await speak("梅林請閉眼，壞人手放低。");
-                await wait(SHORT_PAUSE);
+                await wait(1500);
             }
 
-            // --- 派西維爾階段 (Percival) ---
-            if (hasPercival) {
+            // 派西維爾
+            if (config.percival) {
                 let percyText = "派西維爾請張開眼。";
-                if (hasMorgana) {
-                    percyText += " 梅林同莫甘娜請舉起手指公。";
-                } else {
-                    percyText += " 梅林請舉起手指公。";
-                }
-
+                percyText += config.morgana ? " 梅林同莫甘娜請舉起手指公。" : " 梅林請舉起手指公。";
                 await speak(percyText);
-                await wait(LONG_PAUSE);
+                await wait(3500);
                 await speak("派西維爾請閉眼，其他人手放低。");
-                await wait(SHORT_PAUSE);
+                await wait(1500);
             }
 
-            // --- 結束 ---
-            await speak("天光啦！所有人請張開眼。遊戲開始！");
-            document.getElementById('status').innerText = "遊戲開始！請開始發言。";
+            await speak("天光！所有人請張開眼。遊戲開始！");
+            startGameLoop(); 
 
-        } catch (e) {
-            console.error("Narrator Error:", e);
-            alert("語音播放發生錯誤，請重新整理頁面。");
+        } catch (e) { console.error(e); }
+    }
+
+    function skipNarrator() {
+        synth.cancel();
+        startGameLoop();
+    }
+
+    // --- 遊戲記錄 ---
+    function startGameLoop() {
+        switchSection('section-game');
+        renderMissionCheckboxes();
+    }
+
+    function renderMissionCheckboxes() {
+        const container = document.getElementById('missionSelectionArea');
+        container.innerHTML = '';
+        
+        // 如果沒名字，就用預設代號
+        const listToRender = players.length > 0 ? players : ['P1','P2','P3','P4','P5'];
+
+        listToRender.forEach((p) => {
+            const label = document.createElement('label');
+            label.className = 'mission-checkbox';
+            label.innerHTML = `<input type="checkbox" value="${p}" name="missionPlayer"> ${p}`;
+            container.appendChild(label);
+        });
+        document.getElementById('currentRoundDisplay').innerText = currentRound;
+    }
+
+    function recordMissionResult() {
+        const checkboxes = document.querySelectorAll('input[name="missionPlayer"]:checked');
+        if (checkboxes.length === 0) {
+            alert("請至少勾選一位玩家！");
+            return;
         }
 
-        startBtn.disabled = false;
-        startBtn.innerText = "開始夜間流程";
+        const selectedNames = Array.from(checkboxes).map(cb => cb.value);
+        missionHistory.push({ round: currentRound, team: selectedNames });
+        
+        // 更新表格
+        const tbody = document.getElementById('historyTableBody');
+        const row = document.createElement('tr');
+        const teamHtml = selectedNames.map(n => `<span class="round-badge">${n}</span>`).join('');
+        row.innerHTML = `<td style="text-align:center; font-weight:bold;">${currentRound}</td><td>${teamHtml}</td>`;
+        tbody.prepend(row); // 新的放上面
+
+        // 下一局
+        currentRound++;
+        document.getElementById('currentRoundDisplay').innerText = currentRound;
+        checkboxes.forEach(cb => cb.checked = false);
+        
+        // 按鈕回饋
+        const btn = document.getElementById('recordBtn');
+        const orgText = btn.innerText;
+        btn.innerText = "已記錄！";
+        btn.style.background = "#2ed573";
+        setTimeout(() => {
+            btn.innerText = orgText;
+            btn.style.background = "";
+        }, 800);
     }
-    
-    // 初始化載入
-    loadVoices();
 </script>
 
 </body>
