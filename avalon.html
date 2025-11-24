@@ -3,17 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>阿瓦隆 Avalon Narrator (Cantonese)</title>
+    <title>阿瓦隆語音主持 (粵語版)</title>
     <style>
         :root {
             --bg-color: #1a1a1a;
             --text-color: #e0e0e0;
             --accent-color: #ff4757;
             --card-bg: #2d3436;
+            --success-color: #4cd137;
+            --warning-color: #e1b12c;
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Microsoft JhengHei", "微軟正黑體", sans-serif;
             background-color: var(--bg-color);
             color: var(--text-color);
             display: flex;
@@ -37,6 +39,8 @@
             box-shadow: 0 4px 15px rgba(0,0,0,0.5);
         }
 
+        h3 { border-bottom: 1px solid #444; padding-bottom: 10px; margin-bottom: 20px; }
+
         .roles-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -47,12 +51,15 @@
 
         .role-item {
             background: rgba(255,255,255,0.05);
-            padding: 10px;
+            padding: 12px;
             border-radius: 8px;
             display: flex;
             align-items: center;
             cursor: pointer;
+            transition: background 0.2s;
         }
+
+        .role-item:hover { background: rgba(255,255,255,0.1); }
 
         input[type="checkbox"] {
             width: 20px;
@@ -74,6 +81,7 @@
             transition: transform 0.2s, opacity 0.2s;
             width: 100%;
             max-width: 300px;
+            font-weight: bold;
         }
 
         button:disabled { background-color: #555; cursor: not-allowed; }
@@ -81,27 +89,28 @@
 
         #status {
             margin-top: 30px;
-            font-size: 1.5rem;
+            font-size: 1.4rem;
             font-weight: bold;
             min-height: 3rem;
-            color: #4cd137;
+            color: var(--success-color);
+            line-height: 1.5;
         }
 
         .voice-warning {
-            color: #e1b12c;
-            font-size: 0.8rem;
-            margin-top: 10px;
+            color: var(--warning-color);
+            font-size: 0.85rem;
+            margin-top: 15px;
             display: none;
         }
     </style>
 </head>
 <body>
 
-    <h1>Avalon Narrator</h1>
-    <p class="subtitle">Cantonese Voice Host (粵語主持)</p>
+    <h1>阿瓦隆語音主持</h1>
+    <p class="subtitle">離線版網頁應用 (粵語/Cantonese)</p>
 
     <div class="container">
-        <h3>Select Roles Present</h3>
+        <h3>選擇登場角色</h3>
         <div class="roles-grid">
             <label class="role-item">
                 <input type="checkbox" id="merlin" checked> 梅林 (Merlin)
@@ -110,70 +119,68 @@
                 <input type="checkbox" id="percival" checked> 派西維爾 (Percival)
             </label>
             <label class="role-item">
+                <input type="checkbox" id="assassin" checked> 刺客 (Assassin)
+            </label>
+            <label class="role-item">
+                <input type="checkbox" id="morgana" checked> 莫甘娜 (Morgana)
+            </label>
+            <label class="role-item">
                 <input type="checkbox" id="mordred"> 莫德雷德 (Mordred)
             </label>
             <label class="role-item">
                 <input type="checkbox" id="oberon"> 奧伯倫 (Oberon)
             </label>
-            <label class="role-item">
-                <input type="checkbox" id="morgana"> 莫甘娜 (Morgana)
-            </label>
         </div>
 
         <div class="controls">
-            <button id="startBtn" onclick="startNarrator()">開始 (Start Night)</button>
-            <p id="voiceStatus" class="voice-warning">Loading voices...</p>
+            <button id="startBtn" onclick="startNarrator()">開始夜間流程</button>
+            <p id="voiceStatus" class="voice-warning">正在偵測語音...</p>
         </div>
 
-        <div id="status"></div>
+        <div id="status">請選擇角色並按開始</div>
     </div>
 
 <script>
-    /**
-     * Senior Engineering Approach:
-     * 1. State Management for script flow.
-     * 2. Asynchronous delay handling for pacing.
-     * 3. Browser compatibility checks for SpeechSynthesis.
-     */
-
     const synth = window.speechSynthesis;
     let selectedVoice = null;
     
-    // Wait for voices to load (Chrome requires this)
+    // 等待語音列表載入 (Chrome 需要)
     window.speechSynthesis.onvoiceschanged = () => {
         loadVoices();
     };
 
     function loadVoices() {
         const voices = synth.getVoices();
-        // Attempt to find a Hong Kong Cantonese voice
+        // 優先尋找香港粵語語音
         selectedVoice = voices.find(voice => voice.lang === 'zh-HK') 
-                     || voices.find(voice => voice.lang === 'zh-TW') // Fallback to TW
-                     || voices.find(voice => voice.lang.includes('zh')); // Fallback to any Chinese
+                     || voices.find(voice => voice.lang === 'zh-TW') // 其次台灣國語
+                     || voices.find(voice => voice.lang.includes('zh')); // 任何中文
         
         const statusEl = document.getElementById('voiceStatus');
         if (!selectedVoice) {
-            statusEl.innerText = "Warning: No Cantonese voice detected. Will use default.";
+            statusEl.innerText = "注意：未偵測到粵語語音包，可能會使用系統預設語音。";
             statusEl.style.display = 'block';
         } else {
-            statusEl.innerText = `Using voice: ${selectedVoice.name}`;
+            statusEl.innerText = `使用語音核心: ${selectedVoice.name}`;
             statusEl.style.display = 'block';
-            statusEl.style.color = '#aaa';
+            statusEl.style.color = '#888';
         }
     }
 
-    // Helper to create a delay promise
+    // 延遲函數 Promise
     const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
-    // Helper to speak text
+    // 朗讀函數
     const speak = (text) => {
         return new Promise((resolve) => {
-            // Update visual status
+            // 更新畫面文字
             document.getElementById('status').innerText = text;
             
             const utterance = new SpeechSynthesisUtterance(text);
             if (selectedVoice) utterance.voice = selectedVoice;
-            utterance.rate = 0.9; // Slightly slower for clarity
+            
+            // 調整語速與音調
+            utterance.rate = 0.9; 
             utterance.pitch = 1.0;
             
             utterance.onend = () => {
@@ -187,39 +194,43 @@
     async function startNarrator() {
         const startBtn = document.getElementById('startBtn');
         startBtn.disabled = true;
-        startBtn.innerText = "Narrating...";
+        startBtn.innerText = "正在主持中...";
 
-        // 1. Gather Configuration
+        // 1. 獲取角色配置
         const hasMerlin = document.getElementById('merlin').checked;
         const hasPercival = document.getElementById('percival').checked;
+        const hasAssassin = document.getElementById('assassin').checked; // 雖然刺客不影響特定腳本，但屬於壞人
         const hasMordred = document.getElementById('mordred').checked;
         const hasOberon = document.getElementById('oberon').checked;
         const hasMorgana = document.getElementById('morgana').checked;
 
-        // 2. Build the Flow
-        // Standard Delay Times (ms)
-        const LONG_PAUSE = 4000; // Time for players to look around
-        const SHORT_PAUSE = 1500; // Transition time
+        // 2. 設定時間間隔 (毫秒)
+        const LONG_PAUSE = 4000;  // 確認身份的時間
+        const SHORT_PAUSE = 1500; // 閉眼後的緩衝
 
         try {
-            // --- START ---
+            // --- 開場 ---
             await speak("天黑請閉眼，所有人將手握成拳頭擺喺枱面。");
             await wait(SHORT_PAUSE);
 
-            // --- MINIONS (Evil Characters) ---
-            // Logic: Minions see each other. Oberon does not wake up, nor is he seen.
+            // --- 壞人階段 (Minions) ---
+            // 刺客(Assassin) 屬於壞人，會在此階段睜眼
             let minionText = "壞人請舉手，張開眼，互相確認身份。";
+            
+            // 如果有奧伯倫，特別提醒
             if (hasOberon) minionText += " 奧伯倫請唔好張開眼。";
             
             await speak(minionText);
-            await wait(LONG_PAUSE + 2000); // Give them time to look
+            await wait(LONG_PAUSE + 2000); 
+            
             await speak("壞人請閉眼，手放低。");
             await wait(SHORT_PAUSE);
 
-            // --- MERLIN ---
-            // Logic: Merlin sees evils. Mordred is hidden from Merlin.
+            // --- 梅林階段 (Merlin) ---
             if (hasMerlin) {
                 let merlinText = "梅林請張開眼。壞人請舉起手指公。";
+                
+                // 如果有莫德雷德，梅林看不到他
                 if (hasMordred) merlinText += " 莫德雷德請唔好舉手。";
                 
                 await speak(merlinText);
@@ -228,8 +239,7 @@
                 await wait(SHORT_PAUSE);
             }
 
-            // --- PERCIVAL ---
-            // Logic: Percival sees Merlin and Morgana (as Merlin).
+            // --- 派西維爾階段 (Percival) ---
             if (hasPercival) {
                 let percyText = "派西維爾請張開眼。";
                 if (hasMorgana) {
@@ -244,19 +254,20 @@
                 await wait(SHORT_PAUSE);
             }
 
-            // --- END ---
-            await speak("天光！所有人請張開眼。遊戲開始！");
-            document.getElementById('status').innerText = "Game On!";
+            // --- 結束 ---
+            await speak("天光啦！所有人請張開眼。遊戲開始！");
+            document.getElementById('status').innerText = "遊戲開始！請開始發言。";
 
         } catch (e) {
-            console.error("Narration interrupted", e);
+            console.error("Narrator Error:", e);
+            alert("語音播放發生錯誤，請重新整理頁面。");
         }
 
         startBtn.disabled = false;
-        startBtn.innerText = "開始 (Start Night)";
+        startBtn.innerText = "開始夜間流程";
     }
     
-    // Initial Load
+    // 初始化載入
     loadVoices();
 </script>
 
