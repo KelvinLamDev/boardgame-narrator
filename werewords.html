@@ -195,6 +195,19 @@
             line-height: 1.6;
         }
 
+        /* 咒語顯示（全咒語，村長/先知/狼人用） */
+        #wordReveal {
+            display: none;
+            background: var(--input-bg);
+            border: 2px solid var(--accent-color);
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            margin: 15px 0;
+        }
+        #wordReveal .word-label { font-size: 0.9rem; color: #aaa; margin-bottom: 5px; }
+        #wordReveal .word-text { font-size: 2.5rem; font-weight: bold; color: var(--accent-color); letter-spacing: 0.2em; }
+
         /* 咒語顯示（占卜師用） */
         #fortuneReveal {
             display: none;
@@ -362,6 +375,11 @@
         <div style="text-align:center; padding: 20px 0;">
             <div style="font-size:4rem; margin-bottom:10px;">🌕</div>
             <div id="narratorText">準備開始...</div>
+            <!-- 咒語顯示框（村長/先知/狼人） -->
+            <div id="wordReveal">
+                <div class="word-label">今晚的咒語是：</div>
+                <div class="word-text" id="wordRevealText"></div>
+            </div>
             <!-- 占卜師提示框 -->
             <div id="fortuneReveal">
                 <div class="hint-label">占卜師，咒語的第一個字是：</div>
@@ -496,13 +514,24 @@
         nightAborted = false;
         switchSection('section-night');
         document.getElementById('fortuneReveal').style.display = 'none';
+        document.getElementById('wordReveal').style.display = 'none';
+
+        const showWord = () => {
+            document.getElementById('wordRevealText').innerText = magicWord;
+            document.getElementById('wordReveal').style.display = '';
+        };
+        const hideWord = () => {
+            document.getElementById('wordReveal').style.display = 'none';
+        };
 
         try {
             // 村長確認
+            showWord();
             await speak('村長，請睇清楚你自己設定嘅咒語，確認後請閉眼。');
             if (nightAborted) return;
             await wait(5000);
             if (nightAborted) return;
+            hideWord();
             await speak('村長請閉眼。');
             if (nightAborted) return;
             await wait(1500);
@@ -510,10 +539,12 @@
             // 先知
             if (config.seer) {
                 if (nightAborted) return;
+                showWord();
                 await speak('先知請睁眼，睇清楚今晚嘅咒語。');
                 if (nightAborted) return;
                 await wait(3000);
                 if (nightAborted) return;
+                hideWord();
                 await speak('先知請閉眼。');
                 if (nightAborted) return;
                 await wait(1500);
@@ -521,12 +552,14 @@
 
             // 狼人（+爪牙）
             if (nightAborted) return;
+            showWord();
             let wolfText = '狼人請睁眼，互相確認身份，並睇清楚今晚嘅咒語。';
             if (config.minion) wolfText += ' 爪牙，你唔知道咒語，請留意邊個係你嘅同伴。';
             await speak(wolfText);
             if (nightAborted) return;
             await wait(5000);
             if (nightAborted) return;
+            hideWord();
             await speak('狼人請閉眼，手放低。');
             if (nightAborted) return;
             await wait(1500);
@@ -535,10 +568,10 @@
             if (config.fortune) {
                 if (nightAborted) return;
                 const firstChar = magicWord[0];
-                await speak('占卜師請睁眼，你只知道咒語嘅第一個字。');
-                if (nightAborted) return;
                 document.getElementById('fortuneChar').innerText = firstChar;
                 document.getElementById('fortuneReveal').style.display = '';
+                await speak('占卜師請睁眼，你只知道咒語嘅第一個字。');
+                if (nightAborted) return;
                 await wait(3000);
                 if (nightAborted) return;
                 document.getElementById('fortuneReveal').style.display = 'none';
