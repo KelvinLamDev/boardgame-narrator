@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="zh-HK" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>狼人真言遊戲助手</title>
+    <script>
+        (function() {
+            var saved = localStorage.getItem('theme');
+            if (saved) document.documentElement.setAttribute('data-theme', saved);
+        })();
+    </script>
+    <style>
+        :root[data-theme="dark"] {
+            --bg-color: #1a1a1a;
+            --text-color: #e0e0e0;
+            --accent-color: #ff4757;
+            --secondary-color: #2ed573;
+            --card-bg: #2d3436;
+            --border-color: #444;
+            --danger-color: #ff6b6b;
+            --input-bg: #111;
+            --input-color: white;
+            --checkbox-bg: #333;
+            --role-item-bg: rgba(255,255,255,0.05);
+            --btn-small-bg: #555;
+            --btn-small-color: white;
+            --btn-disabled-bg: #555;
+            --wolf-color: #ff6b6b;
+            --good-color: #2ed573;
+            --neutral-color: #ffa502;
+        }
+        :root[data-theme="light"] {
+            --bg-color: #f0f4f8;
+            --text-color: #1a202c;
+            --accent-color: #e53e3e;
+            --secondary-color: #38a169;
+            --card-bg: #ffffff;
+            --border-color: #cbd5e0;
+            --danger-color: #e53e3e;
+            --input-bg: #edf2f7;
+            --input-color: #1a202c;
+            --checkbox-bg: #e2e8f0;
+            --role-item-bg: rgba(0,0,0,0.04);
+            --btn-small-bg: #718096;
+            --btn-small-color: #ffffff;
+            --btn-disabled-bg: #a0aec0;
+            --wolf-color: #e53e3e;
+            --good-color: #38a169;
+            --neutral-color: #dd6b20;
+        }
+
+        body {
+            font-family: -apple-system, "Microsoft JhengHei", "微軟正黑體", sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 10px;
+            transition: background-color 0.3s, color 0.3s;
+            box-sizing: border-box;
+        }
+
+        h1 { color: var(--accent-color); margin: 10px 0; font-size: 1.8rem; }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            margin-bottom: 20px;
+            box-sizing: border-box;
+        }
+
+        .section { display: none; }
+        .section.active { display: block; animation: fadeIn 0.4s; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h3 {
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+            margin-top: 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* 按鈕 */
+        button {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1rem;
+            transition: all 0.2s;
+        }
+        .btn-primary { background-color: var(--accent-color); color: white; width: 100%; }
+        .btn-success { background-color: var(--secondary-color); color: #000; width: 100%; }
+        .btn-danger { background: var(--danger-color); color: white; width: 100%; }
+        .btn-small { padding: 8px 15px; font-size: 0.9rem; background: var(--btn-small-bg); color: var(--btn-small-color); width: 100%; }
+        button:disabled { background-color: var(--btn-disabled-bg); opacity: 0.7; cursor: not-allowed; }
+
+        .theme-toggle {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            border-radius: 20px;
+            padding: 4px 12px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            width: auto;
+        }
+        .theme-toggle:hover { opacity: 0.8; }
+
+        /* 角色配置 */
+        .roles-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .role-item {
+            background: var(--role-item-bg);
+            padding: 10px;
+            border-radius: 8px;
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            cursor: pointer;
+        }
+        .role-item input[type="checkbox"] {
+            margin-top: 3px;
+            width: 18px;
+            height: 18px;
+            accent-color: var(--accent-color);
+            flex-shrink: 0;
+            cursor: pointer;
+        }
+        .role-item .role-info .role-name { font-weight: bold; font-size: 0.95rem; }
+        .role-item .role-info .role-faction {
+            font-size: 0.75rem;
+            margin-top: 2px;
+        }
+        .faction-good { color: var(--good-color); }
+        .faction-evil { color: var(--wolf-color); }
+        .faction-neutral { color: var(--neutral-color); }
+
+        /* Section 2: 咒語輸入 */
+        .word-input-area {
+            text-align: center;
+            padding: 20px 0;
+        }
+        .word-input-area input[type="text"] {
+            width: 100%;
+            padding: 14px;
+            border-radius: 8px;
+            border: 2px solid var(--border-color);
+            background: var(--input-bg);
+            color: var(--input-color);
+            font-size: 1.4rem;
+            text-align: center;
+            box-sizing: border-box;
+            letter-spacing: 0.1em;
+        }
+        .word-input-area input[type="text"]:focus {
+            outline: none;
+            border-color: var(--accent-color);
+        }
+        .word-hidden-display {
+            font-size: 2rem;
+            letter-spacing: 0.3em;
+            color: var(--secondary-color);
+            margin: 15px 0;
+            min-height: 2.5rem;
+        }
+
+        /* Section 3: 夜間語音 */
+        #narratorText {
+            color: var(--secondary-color);
+            font-size: 1.2rem;
+            margin: 20px 0;
+            min-height: 1.5em;
+            text-align: center;
+            line-height: 1.6;
+        }
+
+        /* 咒語顯示（占卜師用） */
+        #fortuneReveal {
+            display: none;
+            background: var(--input-bg);
+            border: 2px solid var(--neutral-color);
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            margin: 15px 0;
+        }
+        #fortuneReveal .hint-label { font-size: 0.9rem; color: #aaa; margin-bottom: 5px; }
+        #fortuneReveal .hint-char { font-size: 3rem; font-weight: bold; color: var(--neutral-color); letter-spacing: 0.2em; }
+
+        /* Section 4: 計時板 */
+        .timer-display {
+            font-size: 4.5rem;
+            font-weight: bold;
+            text-align: center;
+            color: var(--secondary-color);
+            font-variant-numeric: tabular-nums;
+            letter-spacing: 0.05em;
+            margin: 10px 0;
+            transition: color 0.3s;
+        }
+        .timer-display.warning { color: var(--neutral-color); }
+        .timer-display.danger { color: var(--danger-color); animation: pulse 0.8s infinite; }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        .timer-controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .duration-selector {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            margin-bottom: 15px;
+        }
+        .duration-btn {
+            padding: 8px 18px;
+            border-radius: 20px;
+            border: 2px solid var(--border-color);
+            background: transparent;
+            color: var(--text-color);
+            font-size: 0.9rem;
+            font-weight: bold;
+            width: auto;
+            cursor: pointer;
+        }
+        .duration-btn.active {
+            border-color: var(--secondary-color);
+            background: var(--secondary-color);
+            color: #000;
+        }
+        .duration-btn:hover:not(.active) { opacity: 0.7; }
+    </style>
+</head>
+<body>
+
+    <div style="display:flex; align-items:center; justify-content:space-between; width:100%; max-width:600px; margin-bottom:10px;">
+        <a href="index.html" style="text-decoration:none;"><button class="btn-small" style="width:auto;">🏠 主頁</button></a>
+        <h1>🐺 狼人真言</h1>
+        <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">☀️ 淺色</button>
+    </div>
+
+    <!-- SECTION 1: 角色配置 -->
+    <div id="section-setup" class="container section active">
+        <h3>角色配置</h3>
+
+        <p style="color:#aaa; font-size:0.9rem; margin-top:0; margin-bottom:15px;">
+            村長及村民為固定角色，勾選額外角色加入遊戲。
+        </p>
+
+        <div class="roles-grid">
+            <!-- 固定角色提示 -->
+            <div class="role-item" style="opacity:0.6; cursor:default;">
+                <input type="checkbox" checked disabled>
+                <div class="role-info">
+                    <div class="role-name">👑 村長</div>
+                    <div class="role-faction faction-neutral">中立（必選）</div>
+                </div>
+            </div>
+            <div class="role-item" style="opacity:0.6; cursor:default;">
+                <input type="checkbox" checked disabled>
+                <div class="role-info">
+                    <div class="role-name">🐺 狼人</div>
+                    <div class="role-faction faction-evil">壞人（必選）</div>
+                </div>
+            </div>
+
+            <!-- 可選角色 -->
+            <label class="role-item">
+                <input type="checkbox" id="role-seer" checked>
+                <div class="role-info">
+                    <div class="role-name">🔮 先知</div>
+                    <div class="role-faction faction-good">好人</div>
+                </div>
+            </label>
+            <label class="role-item">
+                <input type="checkbox" id="role-minion">
+                <div class="role-info">
+                    <div class="role-name">🗡️ 爪牙</div>
+                    <div class="role-faction faction-evil">壞人</div>
+                </div>
+            </label>
+            <label class="role-item">
+                <input type="checkbox" id="role-fortune">
+                <div class="role-info">
+                    <div class="role-name">🌟 占卜師</div>
+                    <div class="role-faction faction-good">好人</div>
+                </div>
+            </label>
+            <label class="role-item">
+                <input type="checkbox" id="role-drunk">
+                <div class="role-info">
+                    <div class="role-name">🍺 醉漢</div>
+                    <div class="role-faction faction-good">好人</div>
+                </div>
+            </label>
+            <label class="role-item">
+                <input type="checkbox" id="role-cursed">
+                <div class="role-info">
+                    <div class="role-name">💀 被詛咒者</div>
+                    <div class="role-faction faction-neutral">中立</div>
+                </div>
+            </label>
+        </div>
+
+        <button class="btn-primary" onclick="goToWordInput()">🌙 開始天黑</button>
+        <p id="voiceStatus" style="font-size:0.8rem; color:#666; margin-top:10px; text-align:center;">語音載入中...</p>
+    </div>
+
+    <!-- SECTION 2: 村長輸入咒語 -->
+    <div id="section-word" class="container section">
+        <h3>🌑 天黑了 — 村長設定咒語</h3>
+
+        <p style="color:#aaa; font-size:0.9rem; margin-bottom:10px;">
+            請村長偷偷輸入今晚的咒語（謎底）。其他玩家請低頭閉眼。
+        </p>
+
+        <div class="word-input-area">
+            <div id="wordInputWrapper">
+                <input type="text" id="magicWordInput" placeholder="輸入咒語…" autocomplete="off" autocorrect="off" spellcheck="false" maxlength="20">
+                <p style="font-size:0.8rem; color:#666; margin-top:8px;">輸入完成後按下確認，咒語將會隱藏</p>
+                <button class="btn-success" style="margin-top:10px;" onclick="confirmWord()">✅ 確認咒語</button>
+            </div>
+            <div id="wordHiddenWrapper" style="display:none;">
+                <div class="word-hidden-display">● ● ● ● ●</div>
+                <p style="color:var(--secondary-color); font-size:0.9rem;">咒語已鎖定，其他人無法看見。</p>
+                <button class="btn-primary" onclick="startNightNarration()">▶ 繼續夜間流程</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SECTION 3: 夜間語音 -->
+    <div id="section-night" class="container section">
+        <h3>🌑 夜間語音進行中</h3>
+        <div style="text-align:center; padding: 20px 0;">
+            <div style="font-size:4rem; margin-bottom:10px;">🌕</div>
+            <div id="narratorText">準備開始...</div>
+            <!-- 占卜師提示框 -->
+            <div id="fortuneReveal">
+                <div class="hint-label">占卜師，咒語的第一個字是：</div>
+                <div class="hint-char" id="fortuneChar">?</div>
+            </div>
+        </div>
+        <button class="btn-danger" onclick="skipNarrator()" style="margin-top:10px;">⏩ 跳過語音（直接天亮）</button>
+    </div>
+
+    <!-- SECTION 4: 遊戲計時板 -->
+    <div id="section-game" class="container section">
+        <h3>☀️ 遊戲進行中</h3>
+
+        <!-- 時長選擇 -->
+        <div class="duration-selector" id="durationSelector">
+            <button class="duration-btn" onclick="setDuration(3)">3 分鐘</button>
+            <button class="duration-btn active" onclick="setDuration(4)">4 分鐘</button>
+            <button class="duration-btn" onclick="setDuration(5)">5 分鐘</button>
+        </div>
+
+        <div class="timer-display" id="timerDisplay">4:00</div>
+
+        <div class="timer-controls">
+            <button class="btn-success" id="startPauseBtn" onclick="toggleTimer()">▶ 開始</button>
+            <button class="btn-small" onclick="resetTimer()">🔄 重設</button>
+        </div>
+
+        <button class="btn-primary" onclick="wordGuessed()" style="margin-bottom:10px;">🎉 有人猜中咒語！</button>
+        <button class="btn-small" onclick="resetToSetup()">🔄 重新開始</button>
+    </div>
+
+<script>
+    // --- 主題 ---
+    const html = document.documentElement;
+    const themeBtn = document.getElementById('themeBtn');
+
+    function applyTheme(t) {
+        html.setAttribute('data-theme', t);
+        themeBtn.textContent = t === 'dark' ? '☀️ 淺色' : '🌙 深色';
+        localStorage.setItem('theme', t);
+    }
+    function toggleTheme() {
+        applyTheme(html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+    }
+    (function() {
+        const s = localStorage.getItem('theme');
+        themeBtn.textContent = (s || html.getAttribute('data-theme')) === 'dark' ? '☀️ 淺色' : '🌙 深色';
+    })();
+
+    // --- 語音 ---
+    const synth = window.speechSynthesis;
+    let selectedVoice = null;
+
+    function loadVoices() {
+        const voices = synth.getVoices();
+        selectedVoice = voices.find(v => v.lang === 'zh-HK') ||
+                        voices.find(v => v.lang === 'zh-TW') ||
+                        voices.find(v => v.lang.includes('zh'));
+        document.getElementById('voiceStatus').innerText = selectedVoice
+            ? `語音就緒：${selectedVoice.name}`
+            : '（未找到中文語音，將使用預設）';
+    }
+    window.speechSynthesis.onvoiceschanged = loadVoices;
+    loadVoices();
+
+    const wait = ms => new Promise(r => setTimeout(r, ms));
+    function speak(text) {
+        return new Promise(resolve => {
+            document.getElementById('narratorText').innerText = text;
+            const u = new SpeechSynthesisUtterance(text);
+            if (selectedVoice) u.voice = selectedVoice;
+            u.rate = 0.95;
+            u.onend = resolve;
+            u.onerror = resolve;
+            synth.speak(u);
+        });
+    }
+
+    // --- 狀態 ---
+    let magicWord = '';
+    let config = {};
+
+    // --- 頁面切換 ---
+    function switchSection(id) {
+        document.querySelectorAll('.section').forEach(el => el.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        window.scrollTo(0, 0);
+    }
+
+    // --- Section 1 → 2 ---
+    function goToWordInput() {
+        config = {
+            seer:    document.getElementById('role-seer').checked,
+            minion:  document.getElementById('role-minion').checked,
+            fortune: document.getElementById('role-fortune').checked,
+            drunk:   document.getElementById('role-drunk').checked,
+            cursed:  document.getElementById('role-cursed').checked,
+        };
+        // 重置咒語輸入區
+        document.getElementById('magicWordInput').value = '';
+        document.getElementById('wordInputWrapper').style.display = '';
+        document.getElementById('wordHiddenWrapper').style.display = 'none';
+        magicWord = '';
+
+        switchSection('section-word');
+
+        // 播報天黑提示
+        synth.cancel();
+        const u = new SpeechSynthesisUtterance('天黑請閉眼，所有人低頭。村長請偷偷輸入今晚的咒語。');
+        if (selectedVoice) u.voice = selectedVoice;
+        u.rate = 0.95;
+        synth.speak(u);
+    }
+
+    // --- 確認咒語 ---
+    function confirmWord() {
+        const val = document.getElementById('magicWordInput').value.trim();
+        if (!val) {
+            alert('請輸入咒語！');
+            return;
+        }
+        magicWord = val;
+        document.getElementById('wordInputWrapper').style.display = 'none';
+        document.getElementById('wordHiddenWrapper').style.display = '';
+    }
+
+    // --- Section 2 → 3：夜間語音流程 ---
+    let nightAborted = false;
+
+    async function startNightNarration() {
+        if (!magicWord) { alert('請先輸入並確認咒語！'); return; }
+        nightAborted = false;
+        switchSection('section-night');
+        document.getElementById('fortuneReveal').style.display = 'none';
+
+        try {
+            // 村長確認
+            await speak('村長，請睇清楚你自己設定嘅咒語，確認後請閉眼。');
+            if (nightAborted) return;
+            await wait(5000);
+            if (nightAborted) return;
+            await speak('村長請閉眼。');
+            if (nightAborted) return;
+            await wait(1500);
+
+            // 先知
+            if (config.seer) {
+                if (nightAborted) return;
+                await speak('先知請睁眼，睇清楚今晚嘅咒語。');
+                if (nightAborted) return;
+                await wait(3000);
+                if (nightAborted) return;
+                await speak('先知請閉眼。');
+                if (nightAborted) return;
+                await wait(1500);
+            }
+
+            // 狼人（+爪牙）
+            if (nightAborted) return;
+            let wolfText = '狼人請睁眼，互相確認身份，並睇清楚今晚嘅咒語。';
+            if (config.minion) wolfText += ' 爪牙，你唔知道咒語，請留意邊個係你嘅同伴。';
+            await speak(wolfText);
+            if (nightAborted) return;
+            await wait(5000);
+            if (nightAborted) return;
+            await speak('狼人請閉眼，手放低。');
+            if (nightAborted) return;
+            await wait(1500);
+
+            // 占卜師
+            if (config.fortune) {
+                if (nightAborted) return;
+                const firstChar = magicWord[0];
+                await speak('占卜師請睁眼，你只知道咒語嘅第一個字。');
+                if (nightAborted) return;
+                document.getElementById('fortuneChar').innerText = firstChar;
+                document.getElementById('fortuneReveal').style.display = '';
+                await wait(3000);
+                if (nightAborted) return;
+                document.getElementById('fortuneReveal').style.display = 'none';
+                await speak('占卜師請閉眼。');
+                if (nightAborted) return;
+                await wait(1500);
+            }
+
+            // 天光
+            if (nightAborted) return;
+            await speak('天光！所有人請睁眼。計時開始！');
+            if (!nightAborted) startGameBoard();
+
+        } catch(e) { console.error(e); }
+    }
+
+    function skipNarrator() {
+        nightAborted = true;
+        synth.cancel();
+        startGameBoard();
+    }
+
+    // --- Section 4：計時板 ---
+    let timerDuration = 4 * 60; // 秒
+    let timerRemaining = timerDuration;
+    let timerInterval = null;
+    let timerRunning = false;
+
+    function startGameBoard() {
+        resetTimer();
+        switchSection('section-game');
+    }
+
+    function setDuration(mins) {
+        if (timerRunning) return;
+        timerDuration = mins * 60;
+        timerRemaining = timerDuration;
+        updateTimerDisplay();
+        document.querySelectorAll('.duration-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.textContent.trim().startsWith(String(mins)));
+        });
+    }
+
+    function toggleTimer() {
+        if (timerRunning) {
+            pauseTimer();
+        } else {
+            startTimer();
+        }
+    }
+
+    function startTimer() {
+        if (timerRemaining <= 0) return;
+        timerRunning = true;
+        document.getElementById('startPauseBtn').textContent = '⏸ 暫停';
+        document.getElementById('durationSelector').style.opacity = '0.4';
+        document.getElementById('durationSelector').style.pointerEvents = 'none';
+        timerInterval = setInterval(() => {
+            timerRemaining--;
+            updateTimerDisplay();
+            if (timerRemaining <= 0) {
+                clearInterval(timerInterval);
+                timerRunning = false;
+                document.getElementById('startPauseBtn').textContent = '▶ 開始';
+                onTimerEnd();
+            }
+        }, 1000);
+    }
+
+    function pauseTimer() {
+        clearInterval(timerInterval);
+        timerRunning = false;
+        document.getElementById('startPauseBtn').textContent = '▶ 繼續';
+    }
+
+    function resetTimer() {
+        clearInterval(timerInterval);
+        timerRunning = false;
+        timerRemaining = timerDuration;
+        updateTimerDisplay();
+        document.getElementById('startPauseBtn').textContent = '▶ 開始';
+        document.getElementById('durationSelector').style.opacity = '';
+        document.getElementById('durationSelector').style.pointerEvents = '';
+        document.getElementById('timerDisplay').className = 'timer-display';
+    }
+
+    function updateTimerDisplay() {
+        const m = Math.floor(timerRemaining / 60);
+        const s = timerRemaining % 60;
+        const el = document.getElementById('timerDisplay');
+        el.textContent = `${m}:${String(s).padStart(2, '0')}`;
+        if (timerRemaining <= 30) {
+            el.className = 'timer-display danger';
+        } else if (timerRemaining <= 60) {
+            el.className = 'timer-display warning';
+        } else {
+            el.className = 'timer-display';
+        }
+    }
+
+    function onTimerEnd() {
+        document.getElementById('timerDisplay').className = 'timer-display danger';
+        speak('時間到！開始討論同投票！');
+    }
+
+    function wordGuessed() {
+        resetTimer();
+        speak('有人猜中咒語！狼人請即刻決定刺殺目標！');
+    }
+
+    function resetToSetup() {
+        synth.cancel();
+        clearInterval(timerInterval);
+        timerRunning = false;
+        magicWord = '';
+        timerDuration = 4 * 60;
+        timerRemaining = timerDuration;
+        // 重設時長按鈕
+        document.querySelectorAll('.duration-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.textContent.trim().startsWith('4'));
+        });
+        document.getElementById('durationSelector').style.opacity = '';
+        document.getElementById('durationSelector').style.pointerEvents = '';
+        updateTimerDisplay();
+        switchSection('section-setup');
+    }
+</script>
+
+</body>
+</html>
