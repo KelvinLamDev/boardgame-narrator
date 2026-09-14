@@ -628,8 +628,8 @@
     function updateTimerDisplay() {
         const m = Math.floor(timerRemaining / 60);
         const s = timerRemaining % 60;
-        document.getElementById('timerDisplay').textContent = `${m}:${String(s).padStart(2, '0')}`;
         const el = document.getElementById('timerDisplay');
+        el.textContent = `${m}:${String(s).padStart(2, '0')}`;
         if (timerRemaining <= 30) {
             el.className = 'timer-display danger';
         } else if (timerRemaining <= 60) {
@@ -645,9 +645,7 @@
     }
 
     function wordGuessed() {
-        clearInterval(timerInterval);
-        timerRunning = false;
-        document.getElementById('startPauseBtn').textContent = '▶ 開始';
+        resetTimer();
         speak('有人猜中咒語！狼人請即刻決定刺殺目標！');
     }
 
