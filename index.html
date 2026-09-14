@@ -28,6 +28,8 @@
         a { text-decoration:none; }
         .btn { display:inline-block; padding:14px 22px; border-radius:10px; font-weight:700; background:#ff6b6b; color:white; border:none; cursor:pointer; font-size:1rem; }
         .btn:active{ transform:translateY(1px); }
+        .btn-wolf { background:#7c3aed; }
+        .btn-group { display:flex; flex-direction:column; gap:12px; }
         .small { margin-top:12px; color: var(--small-text); font-size:0.88rem; }
         .theme-toggle {
             position: absolute;
@@ -56,7 +58,10 @@
         <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">☀️ 淺色</button>
         <h1>Boardgame Narrator</h1>
         <p>歡迎！選擇下方工具以開始。</p>
-        <a href="avalon.html"><button class="btn">開啟 阿瓦隆遊戲助手</button></a>
+        <div class="btn-group">
+            <a href="avalon.html"><button class="btn">⚔️ 開啟 阿瓦隆遊戲助手</button></a>
+            <a href="werewords.html"><button class="btn btn-wolf">🐺 開啟 狼人真言遊戲助手</button></a>
+        </div>
         <div class="small">或把此頁設為專案入口。</div>
     </div>
     <script>
