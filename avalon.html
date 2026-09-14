@@ -1,11 +1,18 @@
 <!DOCTYPE html>
-<html lang="zh-HK">
+<html lang="zh-HK" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>阿瓦隆遊戲助手 (專業版)</title>
+    <!-- Apply saved theme before first paint to avoid FOUC -->
+    <script>
+        (function() {
+            var saved = localStorage.getItem('theme');
+            if (saved) document.documentElement.setAttribute('data-theme', saved);
+        })();
+    </script>
     <style>
-        :root {
+        :root[data-theme="dark"] {
             --bg-color: #1a1a1a;
             --text-color: #e0e0e0;
             --accent-color: #ff4757;
@@ -13,6 +20,33 @@
             --card-bg: #2d3436;
             --border-color: #444;
             --danger-color: #ff6b6b;
+            --input-bg: #111;
+            --input-color: white;
+            --history-th-bg: #333;
+            --checkbox-bg: #333;
+            --player-tag-bg: rgba(255,255,255,0.1);
+            --role-item-bg: rgba(255,255,255,0.05);
+            --btn-small-bg: #555;
+            --btn-small-color: white;
+            --btn-disabled-bg: #555;
+        }
+        :root[data-theme="light"] {
+            --bg-color: #f0f4f8;
+            --text-color: #1a202c;
+            --accent-color: #e53e3e;
+            --secondary-color: #38a169;
+            --card-bg: #ffffff;
+            --border-color: #cbd5e0;
+            --danger-color: #e53e3e;
+            --input-bg: #edf2f7;
+            --input-color: #1a202c;
+            --history-th-bg: #e2e8f0;
+            --checkbox-bg: #e2e8f0;
+            --player-tag-bg: rgba(0,0,0,0.07);
+            --role-item-bg: rgba(0,0,0,0.04);
+            --btn-small-bg: #718096;
+            --btn-small-color: #ffffff;
+            --btn-disabled-bg: #a0aec0;
         }
 
         body {
@@ -25,6 +59,7 @@
             min-height: 100vh;
             margin: 0;
             padding: 10px;
+            transition: background-color 0.3s, color 0.3s;
         }
 
         h1 { color: var(--accent-color); margin: 10px 0; font-size: 1.8rem; }
@@ -62,8 +97,8 @@
             padding: 12px;
             border-radius: 6px;
             border: 1px solid var(--border-color);
-            background: #111;
-            color: white;
+            background: var(--input-bg);
+            color: var(--input-color);
             font-size: 1rem;
         }
 
@@ -91,9 +126,21 @@
         }
         .btn-outline-danger:hover { background: var(--danger-color); color: white; }
 
-        .btn-small { padding: 8px 15px; font-size: 0.9rem; background: #555; color: white; width: 100%; }
+        .btn-small { padding: 8px 15px; font-size: 0.9rem; background: var(--btn-small-bg); color: var(--btn-small-color); width: 100%; }
 
-        button:disabled { background-color: #555; opacity: 0.7; cursor: not-allowed; }
+        button:disabled { background-color: var(--btn-disabled-bg); opacity: 0.7; cursor: not-allowed; }
+
+        .theme-toggle {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            border-radius: 20px;
+            padding: 4px 12px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            width: auto;
+        }
+        .theme-toggle:hover { opacity: 0.8; }
 
         /* 玩家名單 */
         .player-list-grid {
@@ -104,7 +151,7 @@
         }
         
         .player-tag {
-            background: rgba(255,255,255,0.1);
+            background: var(--player-tag-bg);
             padding: 8px 12px;
             border-radius: 20px;
             display: flex;
@@ -122,7 +169,7 @@
         }
 
         .role-item {
-            background: rgba(255,255,255,0.05);
+            background: var(--role-item-bg);
             padding: 10px;
             border-radius: 8px;
             display: flex;
@@ -141,7 +188,7 @@
 
         .mission-checkbox {
             display: block;
-            background: #333;
+            background: var(--checkbox-bg);
             padding: 10px;
             border-radius: 6px;
             cursor: pointer;
@@ -172,7 +219,7 @@
             text-align: left;
         }
 
-        .history-log th { background: #333; }
+        .history-log th { background: var(--history-th-bg); }
 
         #narratorText { color: var(--secondary-color); font-size: 1.2rem; margin: 20px 0; min-height: 1.5em; text-align: center;}
         
@@ -199,8 +246,9 @@
 <body>
 
     <div style="display:flex; align-items:center; justify-content:space-between; width:100%; max-width:600px; margin-bottom:10px;">
-        <a href="index.html" style="text-decoration:none;"><button class="btn-small">🏠 主頁</button></a>
+        <a href="index.html" style="text-decoration:none;"><button class="btn-small" style="width:auto;">🏠 主頁</button></a>
         <h1>阿瓦隆遊戲助手</h1>
+        <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">☀️ 淺色</button>
     </div>
 
     <!-- SECTION 1: 設置與玩家輸入 -->
@@ -280,6 +328,26 @@
     </div>
 
 <script>
+    // --- 主題切換 ---
+    const html = document.documentElement;
+    const themeBtn = document.getElementById('themeBtn');
+
+    function applyTheme(theme) {
+        html.setAttribute('data-theme', theme);
+        themeBtn.textContent = theme === 'dark' ? '☀️ 淺色' : '🌙 深色';
+        localStorage.setItem('theme', theme);
+    }
+
+    function toggleTheme() {
+        applyTheme(html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+    }
+
+    (function() {
+        const saved = localStorage.getItem('theme');
+        if (saved) applyTheme(saved);
+        else themeBtn.textContent = html.getAttribute('data-theme') === 'dark' ? '☀️ 淺色' : '🌙 深色';
+    })();
+
     // --- 全域變數 ---
     let players = [];
     let currentRound = 1;
