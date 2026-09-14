@@ -178,7 +178,7 @@
             border-color: var(--accent-color);
         }
         .word-hidden-display {
-            font-size: 2rem;
+            font-size: 2.4rem;
             letter-spacing: 0.3em;
             color: var(--secondary-color);
             margin: 15px 0;
@@ -206,7 +206,9 @@
             margin: 15px 0;
         }
         #wordReveal .word-label { font-size: 0.9rem; color: #aaa; margin-bottom: 5px; }
-        #wordReveal .word-text { font-size: 2.5rem; font-weight: bold; color: var(--accent-color); letter-spacing: 0.2em; }
+        #wordReveal .word-text { font-size: 3.2rem; font-weight: bold; color: var(--accent-color); letter-spacing: 0.2em; }
+        /* also apply larger size for in-game reveal */
+        #wordRevealGame .word-text { font-size: 3.2rem; font-weight: bold; color: var(--accent-color); letter-spacing: 0.2em; }
 
         /* 咒語顯示（占卜師用） */
         #fortuneReveal {
@@ -325,20 +327,6 @@
                 <div class="role-info">
                     <div class="role-name">🌟 占卜師</div>
                     <div class="role-faction faction-good">好人</div>
-                </div>
-            </label>
-            <label class="role-item">
-                <input type="checkbox" id="role-drunk">
-                <div class="role-info">
-                    <div class="role-name">🍺 醉漢</div>
-                    <div class="role-faction faction-good">好人</div>
-                </div>
-            </label>
-            <label class="role-item">
-                <input type="checkbox" id="role-cursed">
-                <div class="role-info">
-                    <div class="role-name">💀 被詛咒者</div>
-                    <div class="role-faction faction-neutral">中立</div>
                 </div>
             </label>
         </div>
@@ -475,8 +463,6 @@
             seer:    document.getElementById('role-seer').checked,
             minion:  document.getElementById('role-minion').checked,
             fortune: document.getElementById('role-fortune').checked,
-            drunk:   document.getElementById('role-drunk').checked,
-            cursed:  document.getElementById('role-cursed').checked,
         };
         // 重置咒語輸入區
         document.getElementById('magicWordInput').value = '';
@@ -518,7 +504,7 @@
 
         const showWord = () => {
             document.getElementById('wordRevealText').innerText = magicWord;
-            document.getElementById('wordReveal').style.display = '';
+            document.getElementById('wordReveal').style.display = 'block';
         };
         const hideWord = () => {
             document.getElementById('wordReveal').style.display = 'none';
@@ -553,23 +539,33 @@
             // 狼人（+爪牙）
             if (nightAborted) return;
             showWord();
-            let wolfText = '狼人請睁眼，互相確認身份，並睇清楚今晚嘅咒語。';
-            if (config.minion) wolfText += ' 爪牙，你唔知道咒語，請留意邊個係你嘅同伴。';
-            await speak(wolfText);
+            await speak('狼人請睁眼，互相確認身份，並睇清楚今晚嘅咒語。');
             if (nightAborted) return;
             await wait(5000);
             if (nightAborted) return;
+            // 隱藏咒語後，如果有爪牙則叫爪牙睁眼確認同伴（爪牙不可見咒語）
             hideWord();
-            await speak('狼人請閉眼，手放低。');
             if (nightAborted) return;
-            await wait(1500);
+            await wait(500);
+            if (config.minion) {
+                await speak('爪牙請睁眼，確認你嘅同伴，然後閉眼。');
+                if (nightAborted) return;
+                await wait(3000);
+                await speak('狼人同爪牙請閉眼。');
+                if (nightAborted) return;
+                await wait(1500);
+            } else {
+                await speak('狼人請閉眼。');
+                if (nightAborted) return;
+                await wait(1500);
+            }
 
             // 占卜師
             if (config.fortune) {
                 if (nightAborted) return;
                 const firstChar = magicWord[0];
                 document.getElementById('fortuneChar').innerText = firstChar;
-                document.getElementById('fortuneReveal').style.display = '';
+                document.getElementById('fortuneReveal').style.display = 'block';
                 await speak('占卜師請睁眼，你只知道咒語嘅第一個字。');
                 if (nightAborted) return;
                 await wait(3000);
