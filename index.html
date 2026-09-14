@@ -43,6 +43,13 @@
         }
         .theme-toggle:hover { opacity: 0.8; }
     </style>
+    <!-- Apply saved theme before first paint to avoid FOUC -->
+    <script>
+        (function() {
+            var saved = localStorage.getItem('theme');
+            if (saved) document.documentElement.setAttribute('data-theme', saved);
+        })();
+    </script>
 </head>
 <body>
     <div class="card">
@@ -66,9 +73,8 @@
             applyTheme(html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
         }
 
-        // Load saved preference on page load
-        const saved = localStorage.getItem('theme');
-        if (saved) applyTheme(saved);
+        // Sync button label to current theme (which was already applied in <head>)
+        btn.textContent = html.getAttribute('data-theme') === 'dark' ? '☀️ 淺色' : '🌙 深色';
     </script>
 </body>
 </html>
