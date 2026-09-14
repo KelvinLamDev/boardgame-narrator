@@ -535,10 +535,10 @@
             if (config.fortune) {
                 if (nightAborted) return;
                 const firstChar = magicWord[0];
-                await speak('占卜師請睁眼，你只知道咒語嘅第一個字。');
-                if (nightAborted) return;
                 document.getElementById('fortuneChar').innerText = firstChar;
                 document.getElementById('fortuneReveal').style.display = '';
+                await speak('占卜師請睁眼，你只知道咒語嘅第一個字。');
+                if (nightAborted) return;
                 await wait(3000);
                 if (nightAborted) return;
                 document.getElementById('fortuneReveal').style.display = 'none';
